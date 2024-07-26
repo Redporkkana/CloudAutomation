@@ -1,0 +1,28 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    count: "{{ count }}"
+    group_name: "{{ group_name }}"
+    instance_type: "{{ instance_type }}"
+    key_name: "{{ key_name }}"
+    security_group: "{{ security_group }}"
+    subnet_id: "{{ subnet_id }}"
+    ami_id: "{{ ami_id }}"
+
+  tasks:
+    - name: Launch EC2 instances
+      ec2_instance:
+        name: "instance_{{ item }}"
+        instance_type: "{{ instance_type }}"
+        key_name: "{{ key_name }}"
+        security_groups: ["{{ security_group }}"]
+        subnet_id: "{{ subnet_id }}"
+        image_id: "{{ ami_id }}"
+      with_sequence: start=1 end={{ count }}
+      register: ec2_instances
+
+    - name: Add EC2 instances to Ansible inventory
+      add_host:
+        name: "{{ item.instance.public_ip }}"
+        groups: "{{ group_name }}"
+      with_items: "{{ ec2_instances.results }}"
